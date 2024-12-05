@@ -81,6 +81,7 @@ INDEX_TEMPLATE = """
     <p style="font-size: 12px;">This app uses the RiiConnect24 WiiMC API. We are NOT afiliated with RiiConnect24, Nintendo or YouTube. This app is using Code from Wiinet.xyz.</p>
     <p style="color: blue">It's recommend to bookmark this Page</p>
     <p>It's normal that Sites take long to load</p>
+    <p>Version: v0.0.7 Beta</p>
 </body>
 </html>
 """
