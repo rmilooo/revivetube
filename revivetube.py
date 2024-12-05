@@ -164,7 +164,7 @@ def watch():
 
     # User-Agent prüfen
     user_agent = request.headers.get("User-Agent", "").lower()
-    is_wii = "wii" in user_agent
+    is_wii = "wii" in user_agent and "wiiu" not in user_agent
 
     # Video-Pfade
     video_mp4_path = os.path.join(VIDEO_FOLDER, f"{video_id}.mp4")
