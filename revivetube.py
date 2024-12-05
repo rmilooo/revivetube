@@ -85,13 +85,34 @@ INDEX_TEMPLATE = """
 </html>
 """
 
+WATCH_STANDARD_TEMPLATE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+</head>
+<body style="text-align: center; font-family: Arial, sans-serif;">
+    <h1>{{ title }}</h1>
+    <h3>Uploaded by: {{ uploader }}</h3>
+    <video width="640" height="360" controls>
+        <source src="{{ video_mp4 }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <h3>Description:</h3>
+    <p>{{ description }}</p>
+</body>
+</html>
+"""
+
 WATCH_WII_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReviveTube Video</title>
+    <title>{{ title }}</title>
 </head>
 <body style="text-align: center; font-family: Arial, sans-serif;">
     <div style="width: 100%; background-color: #000; text-align: center;">
@@ -102,29 +123,14 @@ WATCH_WII_TEMPLATE = """
         </object>
     </div>
     <p>If the video does not play smoothly, restart the Internet Channel by pressing the Home button and then Reset. It's a bug. It happens if you visit too many Sites</p>
+    <h1>{{ title }}</h1>
+    <h3>Uploaded by: {{ uploader }}</h3>
+    <h3>Description:</h3>
+    <p>{{ description }}</p>
 </body>
 </html>
 """
 
-WATCH_STANDARD_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReviveTube Video</title>
-</head>
-<body style="text-align: center; font-family: Arial, sans-serif;">
-    <h1>ReviveTube Video</h1>
-    <video width="640" height="360" controls>
-        <source src="{{ video_mp4 }}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-</body>
-</html>
-"""
-
-# Routen
 @app.route("/", methods=["GET"])
 def index():
     query = request.args.get("query")
@@ -149,18 +155,47 @@ def index():
                     "id": item["id"]["videoId"],
                     "title": item["snippet"]["title"],
                     "uploader": item["snippet"]["channelTitle"],
-                    "thumbnail": item["snippet"]["thumbnails"]["high"]["url"],
+                    "thumbnail": f"/thumbnail/{item['id']['videoId']}",
                 }
                 for item in data.get("items", [])
             ]
     return render_template_string(INDEX_TEMPLATE, results=results)
 
+@app.route("/video_metadata/<video_id>")
+def video_metadata(video_id):
+    # Metadaten aus der YouTube-API abrufen
+    params = {
+        "part": "snippet",
+        "id": video_id,
+        "key": YOUTUBE_API_KEY,
+    }
+    response = requests.get(YOUTUBE_SEARCH_URL.replace("search", "videos"), params=params, timeout=3)
+    if response.status_code != 200:
+        return {"error": "Failed to fetch metadata"}, 500
+
+    data = response.json()
+    if "items" not in data or not data["items"]:
+        return {"error": "No metadata found"}, 404
+
+    video_data = data["items"][0]["snippet"]
+    return {
+        "title": video_data["title"],
+        "uploader": video_data["channelTitle"],
+        "description": video_data["description"],
+    }
 
 @app.route("/watch", methods=["GET"])
 def watch():
     video_id = request.args.get("video_id")
     if not video_id:
         return "Missing video ID.", 400
+
+    # Metadaten abrufen
+    metadata_response = requests.get(f"http://127.0.0.1:5000/video_metadata/{video_id}")
+    if metadata_response.status_code != 200:
+        return f"Failed to fetch video metadata: {metadata_response.text}", 500
+
+    metadata = metadata_response.json()
 
     # User-Agent prüfen
     user_agent = request.headers.get("User-Agent", "").lower()
@@ -178,7 +213,7 @@ def watch():
             response = requests.get(video_url, stream=True, timeout=10)
             if response.status_code != 200:
                 return f"Failed to download video. HTTP Status: {response.status_code}, Reason: {response.reason}", 500
-            
+
             # Check file size during download
             total_size = 0
             with open(video_mp4_path, "wb") as f:
@@ -191,12 +226,6 @@ def watch():
 
         except requests.exceptions.RequestException as e:
             return f"An error occurred while downloading the video: {str(e)}", 500
-
-    # Check folder size
-    if get_folder_size(VIDEO_FOLDER) > MAX_FOLDER_SIZE:
-        shutil.rmtree(VIDEO_FOLDER)
-        os.makedirs(VIDEO_FOLDER, exist_ok=True)  # Recreate the folder after deletion
-        return "The video folder exceeded 5 GB and was deleted.", 400
 
     # Für Wii in FLV umwandeln
     if is_wii and not os.path.exists(video_flv_path):
@@ -219,15 +248,32 @@ def watch():
 
     # Passendes Template rendern
     if is_wii:
-        return render_template_string(WATCH_WII_TEMPLATE, video_flv=f"/videos/{video_id}.flv")
+        return render_template_string(WATCH_WII_TEMPLATE, video_flv=f"/videos/{video_id}.flv", **metadata)
     else:
-        return render_template_string(WATCH_STANDARD_TEMPLATE, video_mp4=f"/videos/{video_id}.mp4")
-
+        return render_template_string(WATCH_STANDARD_TEMPLATE, video_mp4=f"/videos/{video_id}.mp4", **metadata)
 
 @app.route("/<path:filename>")
 def serve_static(filename):
     return send_file(os.path.join(filename))
 
+@app.route("/thumbnail/<video_id>")
+def get_thumbnail(video_id):
+    thumbnail_url = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+
+    try:
+        # Thumbnail von YouTube abrufen
+        response = requests.get(thumbnail_url, stream=True, timeout=5)
+        if response.status_code == 200:
+            # Content-Type weiterleiten
+            return send_file(
+                response.raw,
+                mimetype=response.headers.get("Content-Type", "image/jpeg"),
+                as_attachment=False,
+            )
+        else:
+            return f"Failed to fetch thumbnail. Status: {response.status_code}", 500
+    except requests.exceptions.RequestException as e:
+        return f"Error fetching thumbnail: {str(e)}", 500
 
 if __name__ == "__main__":
     app.run(debug=True)
