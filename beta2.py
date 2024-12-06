@@ -97,7 +97,7 @@ INDEX_TEMPLATE = """
     <p style="font-size: 12px;">We are NOT afiliated with Nintendo or YouTube. This app is using Code from Wiinet.xyz.</p>
     <p style="color: blue">It's recommend to bookmark this Page</p>
     <p>It's normal that Sites take long to load</p>
-    <p>Version: v0.0.7 Beta</p>
+    <p>Version: v0.0.9 Beta</p>
 </body>
 </html>
 """
