@@ -14,3 +14,5 @@ Go to console.cloud.google.com and create a new application with the youtube dat
 # Beta
 
 You can try using the Beta Version, The Version that is running on the Server. It's not optimized to run on other servers.
+
+Beta Versions: beta.py, beta2.py
