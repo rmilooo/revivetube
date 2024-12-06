@@ -3,7 +3,7 @@ ReviveTube by ReviveMii
 
 Try it on a Wii http://yt.old.errexe.xyz/
 
-New Server: http://yt.old.errexe.xyz/revivetube.py
+New Server download: http://yt.old.errexe.xyz/revivetube.py
 
 The Old Server is using the RiiConnect24 RiiTube API at riitube.rc24.xyz.
 
