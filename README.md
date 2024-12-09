@@ -1,6 +1,8 @@
 # revivetube
 ReviveTube by ReviveMii
 
+ReviveMii Homepage: https://revivemii.fr.to
+
 Try it on a Wii http://yt.old.errexe.xyz/
 
 Server download: http://yt.old.errexe.xyz/revivetube.py
