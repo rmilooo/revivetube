@@ -1,4 +1,7 @@
 # revivetube
+
+Watch YouTube on your Wii!
+
 ReviveTube by ReviveMii
 
 ReviveMii Homepage: https://revivemii.fr.to
