@@ -216,10 +216,9 @@ INDEX_TEMPLATE = """
     <p style="color: blue">It's recommend to bookmark this Page. It's normal that Sites take long to load</p>
     <h1 style="color: red">\/ Scroll down: \/</h1>
     <a href="http://old.errexe.xyz/revivetube/t-and-p.html">Terms of Service and Privacy Policy from ReviveTube (Last Change: 7. Dec 2024 12:41 CET)</a><br><br>
-    <a href="/revivetube.py" target="_blank">Source Code</a><br><br>
+    <a href="https://github.com/ReviveMii/revivetube/" target="_blank">Source Code</a><br><br>
     <a href="http://old.errexe.xyz/discord-redirect.html">Discord Server [Use a Discord Compatibel Device] (We support Discross!!)</a>
     <p>Version: v2 Beta (Sometimes i forget to update the Version Number)</p>
-    <a href="http://old.errexe.xyz/revivetube/changelog.txt">Changelog</a><br><br>
     <a href="/licenses.html">Open Source Software used in this App</a>
 <br>
 </br>
