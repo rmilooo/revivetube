@@ -8,8 +8,6 @@ ReviveMii Homepage: https://revivemii.fr.to
 
 Try it on a Wii http://yt.old.errexe.xyz/
 
-Server download: http://yt.old.errexe.xyz/revivetube.py
-
 Open Source Software used: http://yt.old.errexe.xyz/licenses.html
 
 # Use it yourself
