@@ -225,7 +225,7 @@ INDEX_TEMPLATE = """
     <a href="mailto:theerrorexe@gmail.com">Contact</a>
 </br>
 <br>
-    <a href="/bf.html">Report Bugs & Feedback (Not Working at the time)</a>
+    <a href="/bf.html">Report Bugs & Feedback</a>
 </body>
 </html>
 """
@@ -244,7 +244,7 @@ WATCH_STANDARD_TEMPLATE = """
         Your browser does not support the video tag.
     </video>
         <h1>{{ title }}</h1>
-    <h3>Uploaded by: <a href="/?query=videos+by+@{{ uploader }}">{{ uploader }}</a></h3>
+    <h3>Uploaded by: <a href="/channel?channel_id={{ channelId }}">{{ uploader }}</a></h3>
     <p><strong>Views:</strong> {{ viewCount }}</p>
     <p><strong>Likes:</strong> {{ likeCount }}</p>
     <p><strong>Upload Date:</strong> {{ publishedAt }}</p>
@@ -297,7 +297,7 @@ WATCH_WII_TEMPLATE = """
 <p>If the video does not play smoothly, restart the Internet Channel by pressing the Home button and then Reset. It's a bug. It happens if you visit too many Sites. Scroll down to see Video Infos. Video Infos: Title, Uploader, Views, Likes, Upload Date, Description and comments.</p>
     <h1>{{ title }}</h1>
     <!-- <a href="/fullscreen?video_id={{ video_id }}">Fullscreen (Beta)</a> -->
-    <h3>Uploaded by: <a href="/?query={{ uploader }},+channel">{{ uploader }}</a></h3>
+    <h3>Uploaded by: <a href="/channel?channel_id={{ channelId }}">{{ uploader }}</a></h3>
     <p><strong>Views:</strong> {{ viewCount }}</p>
     <p><strong>Likes:</strong> {{ likeCount }}</p>
     <p><strong>Upload Date:</strong> {{ publishedAt }}</p>
@@ -456,16 +456,13 @@ def get_video_duration_from_file(video_path):
     Gibt die Dauer in Sekunden zurück.
     """
     try:
-        # Führe ffprobe aus, um die Videoinformationen zu erhalten
         result = subprocess.run(
             ['ffprobe', '-v', 'error', '-show_format', '-show_streams', '-of', 'json', video_path],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
         
-        # Parsen der JSON-Ausgabe von ffprobe
         video_info = json.loads(result.stdout)
         
-        # Extrahiere die Dauer des Videos (in Sekunden)
         duration = float(video_info['format']['duration'])
         
         return duration
@@ -481,6 +478,7 @@ def fullscreen():
         return "Fehlende Video-ID.", 400
 
     return render_template_string(FULLSCREEN, video_id=video_id)
+
 @app.route("/watch", methods=["GET"])
 def watch():
     video_id = request.args.get("video_id")
@@ -505,6 +503,7 @@ def watch():
     except requests.exceptions.RequestException as e:
         return f"Fehler bei der Verbindung zur Metadaten-API: {str(e)}", 500
 
+
     comments = []
     try:
         comments = get_video_comments(video_id)
@@ -512,9 +511,8 @@ def watch():
         print(f"Fehler beim Abrufen der Kommentare: {str(e)}")
         comments = []
 
-    # Überprüfe, ob das Video schon verarbeitet wurde
     if os.path.exists(video_mp4_path):
-        video_duration = get_video_duration_from_file(video_flv_path)  # Dauer aus FLV-Datei ermitteln
+        video_duration = get_video_duration_from_file(video_flv_path)
         alert_script = ""
         if video_duration > 420:
             alert_script = """
@@ -527,6 +525,7 @@ def watch():
             return render_template_string(WATCH_WII_TEMPLATE + alert_script, 
                                           title=metadata['title'], 
                                           uploader=metadata['uploader'], 
+                                          channelId=metadata['channelId'],
                                           description=metadata['description'].replace("\n", "<br>"),
                                           viewCount=metadata['viewCount'], 
                                           likeCount=metadata['likeCount'],
@@ -539,6 +538,7 @@ def watch():
         return render_template_string(WATCH_STANDARD_TEMPLATE, 
                                       title=metadata['title'], 
                                       uploader=metadata['uploader'], 
+                                      channelId=metadata['channelId'],
                                       description=metadata['description'].replace("\n", "<br>"),
                                       viewCount=metadata['viewCount'], 
                                       likeCount=metadata['likeCount'], 
@@ -650,6 +650,7 @@ def video_metadata(video_id):
         title = video_data["snippet"]["title"]
         description = video_data["snippet"]["description"]
         uploader = video_data["snippet"]["channelTitle"]
+        channel_id = video_data["snippet"]["channelId"]
         view_count = video_data["statistics"].get("viewCount", "Unknown")
         like_count = video_data["statistics"].get("likeCount", "Unknown")
         dislike_count = video_data["statistics"].get("dislikeCount", "Unknown")
@@ -658,6 +659,7 @@ def video_metadata(video_id):
         return {
             "title": title,
             "uploader": uploader,
+            "channelId": channel_id,
             "description": description,
             "viewCount": view_count,
             "likeCount": like_count,
@@ -702,6 +704,42 @@ def serve_video(filename):
         return response
 
     return send_file(file_path)
+
+@app.route('/channel', methods=['GET'])
+def channel_m():
+    channel_id = request.args.get('channel_id', None)
+    
+    if not channel_id:
+        return "Channel ID is required.", 400
+
+    ydl_opts = {
+        'quiet': True,
+        'extract_flat': True,
+        'playlistend': 20,
+    }
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            url = f"https://www.youtube.com/channel/{channel_id}/videos"
+            info = ydl.extract_info(url, download=False)
+            
+            if 'entries' not in info:
+                return "No videos found.", 404
+            
+            results = [
+                {
+                    'id': video['id'],
+                    'title': video['title'],
+                    'uploader': info.get('uploader', 'Unknown'),
+                    'thumbnail': f"http://yt.old.errexe.xyz/thumbnail/{video['id']}"
+                }
+                for video in info['entries']
+            ]
+            
+            return render_template_string(INDEX_TEMPLATE, results=results)
+    
+    except Exception as e:
+        return f"An error occurred: {str(e)}", 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=5000)
