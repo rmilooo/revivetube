@@ -187,44 +187,105 @@ INDEX_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ReviveTube by ReviveMii</title>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        color: #fff;
+        background-color: #181818;
+        text-align: center; /* Zentriert den Text */
+    }
+    h1 {
+        color: #ff0000;
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+    p, h2 {
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    .search-bar {
+        width: 300px;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        display: block; /* Block-Level für zentrierten Abstand */
+        margin: 0 auto; /* Zentriert das Eingabefeld */
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #333333;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+        display: block;
+        margin: 10px auto; /* Zentriert den Button */
+    }
+    .video-item {
+        margin-bottom: 20px;
+        text-align: center; /* Zentriert jedes Video-Item */
+    }
+    .video-item img {
+        width: 320px;
+        height: 180px;
+        border-radius: 8px;
+    }
+    .video-item-title {
+        color: #fff;
+        font-weight: bold;
+        font-size: 16px;
+        text-align: center;
+    }
+    .video-item-uploader {
+        color: #ccc;
+        font-size: 14px;
+        text-align: center;
+    }
+    .dark-mode {
+        background-color: #181818;
+        color: #fff;
+    }
+    .dark-mode a {
+        color: #1e90ff;
+    }
+</style>
 </head>
-<body style="text-align: center; font-family: Arial, sans-serif;">
+<body class="dark-mode" id="page-body">
     <h1>ReviveTube by ReviveMii</h1>
     <p>A YouTube App for the Wii</p>
     <form action="/" method="get">
-        <input type="text" name="query" placeholder="Search YouTube" style="width: 300px; padding: 10px; font-size: 16px;">
-        <button type="submit" style="padding: 10px 20px; font-size: 16px;">Go</button>
+        <input class="search-bar" type="text" name="query" placeholder="Search YouTube">
+        <button type="submit">Go</button>
     </form>
     {% if results %}
         <h2>Search Results</h2>
-        <ul style="list-style: none; padding: 0;">
+        <div>
             {% for video in results %}
-                <li style="margin-bottom: 20px;">
-                    <a href="/watch?video_id={{ video['id'] }}" style="text-decoration: none; color: #000;">
-                        <img src="{{ video['thumbnail'] }}" alt="{{ video['title'] }}" style="width: 320px; height: 180px;"><br>
-                        <strong>{{ video['title'] }}</strong><br>
-                        <small>By: {{ video['uploader'] }}</small>
+                <div class="video-item">
+                    <a href="/watch?video_id={{ video['id'] }}">
+                        <img src="{{ video['thumbnail'] }}" alt="{{ video['title'] }}">
+                        <div class="video-item-title">{{ video['title'] }}</div>
+                        <div class="video-item-uploader">By: {{ video['uploader'] }}</div>
                     </a>
-                </li>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% endif %}
-    <br>
-    <a href="http://revivemii.errexe.xyz" target="_blank" style="font-size: 14px; color: blue; text-decoration: underline;">Visit ReviveMii</a><br><br>
-    <a href="http://old.errexe.xyz" target="_blank" style="font-size: 14px; color: blue; text-decoration: underline;">Visit ReviveMii (HTTP Only Version for the Wii)</a>
-    <p style="font-size: 12px;">We are NOT afiliated with Nintendo or YouTube. This app is using Code from Wiinet.xyz, For more Information scroll down to Open Source Software.</p>
-    <p style="color: blue">It's recommend to bookmark this Page. It's normal that Sites take long to load</p>
-    <h1 style="color: red">\/ Scroll down: \/</h1>
-    <a href="http://old.errexe.xyz/revivetube/t-and-p.html">Terms of Service and Privacy Policy from ReviveTube (Last Change: 7. Dec 2024 12:41 CET)</a><br><br>
+    <p><a href="http://revivemii.errexe.xyz" target="_blank">Visit ReviveMii</a></p>
+    <p><a href="http://old.errexe.xyz" target="_blank">Visit ReviveMii (HTTP Only Version for the Wii)</a></p>
+    <p style="font-size: 12px;">We are NOT affiliated with Nintendo or YouTube. This app uses code from Wiinet.xyz. For more information, scroll down to Open Source Software.</p>
+    <p style="color: blue">It's recommended to bookmark this page. Some sites may take longer to load.</p>
+    <p style="color: red;">\/ Scroll down \/</p>
+    <a href="http://old.errexe.xyz/revivetube/t-and-p.html">Terms of Service and Privacy Policy (Last Updated: 7. Dec 2024 12:41 CET)</a><br><br>
     <a href="https://github.com/ReviveMii/revivetube/" target="_blank">Source Code</a><br><br>
-    <a href="http://old.errexe.xyz/discord-redirect.html">Discord Server [Use a Discord Compatibel Device] (We support Discross!!)</a>
-    <p>Version: v2 Beta (Sometimes i forget to update the Version Number)</p>
-    <a href="/licenses.html">Open Source Software used in this App</a>
-<br>
-</br>
+    <a href="http://old.errexe.xyz/discord-redirect.html">Discord Server [Use a Compatible Device]</a>
+    <p>Version: v2 Beta (Sometimes I forget to update the Version Number)</p>
+    <a href="/licenses.html">Open Source Software Used in This App</a>
+    <br>
     <a href="mailto:theerrorexe@gmail.com">Contact</a>
-</br>
-<br>
+    <br>
     <a href="/bf.html">Report Bugs & Feedback</a>
 </body>
 </html>
@@ -237,43 +298,47 @@ WATCH_STANDARD_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; text-align: center; color: #fff; background-color: #181818; }
+        video { margin-top: 20px; }
+        h1 { color: #ff0000; font-size: 24px; }
+        h3, p { font-size: 16px; }
+        .comments { text-align: left; margin: 0 auto; width: 80%; font-size: 14px; }
+        .comment { margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #ddd; }
+        .comment p { font-size: 14px; }
+        .dark-mode { background-color: #181818; color: #fff; }
+        .dark-mode a { color: #1e90ff; }
+    </style>
 </head>
-<body style="text-align: center; font-family: Arial, sans-serif;">
-    <video width="640" height="360" controls>
-        <source src="{{ video_mp4 }}" type="video/mp4">
-        Your browser does not support the video tag.
+<!-- <body class="dark-mode" id="page-body">
+   <video width="640" height="360" controls>
+ <source src="{{ video_mp4 }}" type="video/mp4">
+ Your browser does not support the video tag.
     </video>
-        <h1>{{ title }}</h1>
+    <h1>{{ title }}</h1>
     <h3>Uploaded by: <a href="/channel?channel_id={{ channelId }}">{{ uploader }}</a></h3>
     <p><strong>Views:</strong> {{ viewCount }}</p>
     <p><strong>Likes:</strong> {{ likeCount }}</p>
     <p><strong>Upload Date:</strong> {{ publishedAt }}</p>
     <a href="#comments">Skip Description</a>
+    
     <h3>Description:</h3>
     <p>{{ description | safe }}</p>
-<h3 id="comments" class="comments">Comments:</h3>
-<div style="text-align: left; margin: 0 auto; width: 80%; font-size: 14px; font-family: Arial, sans-serif;">
-    {% if comments %}
-        {% for comment in comments %}
-            <div style="margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #ddd;">
-                <p><strong>{{ comment.author }}</strong> posted:</p>
-                <p>{{ comment.text|safe }}</p>
-                <p style="color: gray; font-size: 12px;">Likes: {{ comment.likeCount }} | Post date: {{ comment.publishedAt }}</p>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No Comments.</p>
-    {% endif %}
-</div>
-<p>[DEBUG, FOR DEVS] Choose the mode:</p>
-<form method="get" action="/switch_wii">
-    <input name="video_id" value="{{ video_id }}">
-    <button type="submit">[DEV] Switch Mode</button>
-</form>
-
-<script>
-alert("This App is designed for the Nintendo Wii, some Vidoes will not work on Mobile devices or on the Wii U/3ds! Firefox and other browsers Desktop will work...");
-</script>
+    <h3 id="comments" class="comments">Comments:</h3>
+    <div class="comments">
+        {% if comments %}
+            {% for comment in comments %}
+                <div class="comment">
+                    <p><strong>{{ comment.author }}</strong> posted:</p>
+                    <p>{{ comment.text|safe }}</p>
+                    <p style="color: gray; font-size: 12px;">Likes: {{ comment.likeCount }} | Post date: {{ comment.publishedAt }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No Comments.</p>
+        {% endif %}
+    </div> -->
+Please access this Site on a Wii
 </body>
 </html>
 """
@@ -285,49 +350,64 @@ WATCH_WII_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        text-align: center; /* Zentriert den Text */
+        color: #fff;
+        background-color: #181818;
+    }
+    .dark-mode {
+        background-color: #181818;
+        color: #fff;
+    }
+    .dark-mode a {
+        color: #1e90ff;
+    }
+    .comments {
+        margin: 0 auto;
+        width: 80%;
+    }
+    h1 {
+        color: red;
+        text-align: center; /* Zentriert den Titel */
+    }
+    h3 {
+        color: white;
+        text-align: center;
+    }
+</style>
 </head>
-<body style="text-align: center; font-family: Arial, sans-serif;">
-    <div style="width: 100%; background-color: #000; text-align: center;">
+<body class="dark-mode" id="page-body">
+ <div style="width: 100%; background-color: #000; text-align: center;">
         <object type="application/x-shockwave-flash" data="/player.swf" width="384" height="256">
             <param name="wmode" value="transparent">
             <param name="allowFullScreen" value="false">
             <param name="flashvars" value="filename={{ video_flv }}">
         </object>
     </div>
-<p>If the video does not play smoothly, restart the Internet Channel by pressing the Home button and then Reset. It's a bug. It happens if you visit too many Sites. Scroll down to see Video Infos. Video Infos: Title, Uploader, Views, Likes, Upload Date, Description and comments.</p>
-    <h1>{{ title }}</h1>
-    <!-- <a href="/fullscreen?video_id={{ video_id }}">Fullscreen (Beta)</a> -->
+    <h1 style="color: red">{{ title }}</h1>
     <h3>Uploaded by: <a href="/channel?channel_id={{ channelId }}">{{ uploader }}</a></h3>
     <p><strong>Views:</strong> {{ viewCount }}</p>
     <p><strong>Likes:</strong> {{ likeCount }}</p>
     <p><strong>Upload Date:</strong> {{ publishedAt }}</p>
-     <a href="#comments">Skip Description</a>
-    <h3>Description:</h3>
+    <a href="#comments">Skip Description</a>
+    <h3 style="color: red">Description:</h3>
     <p>{{ description | safe }}</p>
-<h3 id="comments" class="comments">Comments:</h3>
-<div style="text-align: left; margin: 0 auto; width: 80%; font-size: 14px; font-family: Arial, sans-serif;">
-    {% if comments %}
-        {% for comment in comments %}
-            <div style="margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #ddd;">
-                <p><strong>{{ comment.author }}</strong> posted:</p>
-                <p>{{ comment.text|safe }}</p>
-                <p style="color: gray; font-size: 12px;">Likes: {{ comment.likeCount }} | Post date: {{ comment.publishedAt }}</p>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No Comments.</p>
-    {% endif %}
-</div>
-<p>[DEBUG, FOR DEVS] Choose the mode:</p>
-<form method="get" action="/switch_n">
-    <input name="video_id" value="{{ video_id }}">
-    <button type="submit">[DEV] Switch Mode</button>
-</form>
-{% if alert_message %}
-    <script>
-        alert("{{ alert_message }}");
-    </script>
-{% endif %}
+    <h3 id="comments" class="comments" style="color: red">Comments:</h3>
+    <div class="comments">
+        {% if comments %}
+            {% for comment in comments %}
+                <div class="comment">
+                    <p><strong>{{ comment.author }}</strong> posted:</p>
+                    <p>{{ comment.text|safe }}</p>
+                    <p style="color: gray; font-size: 12px;">Likes: {{ comment.likeCount }} | Post date: {{ comment.publishedAt }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No Comments.</p>
+        {% endif %}
+    </div>
 </body>
 </html>
 """
@@ -427,7 +507,7 @@ def index():
 
     if query:
 
-        response = requests.get(f"{API_BASE_URL}search?q={query}", timeout=1)
+        response = requests.get(f"{API_BASE_URL}search?q={query}", timeout=3)
         try:
             data = response.json()  
         except ValueError:
