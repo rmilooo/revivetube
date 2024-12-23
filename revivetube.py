@@ -275,9 +275,9 @@ INDEX_TEMPLATE = """
     {% endif %}
     <p><a href="http://revivemii.errexe.xyz" target="_blank">Visit ReviveMii</a></p>
     <p><a href="http://old.errexe.xyz" target="_blank">Visit ReviveMii (HTTP Only Version for the Wii)</a></p>
+    <p style="color: red;">\/ Scroll down \/</p>
     <p style="font-size: 12px;">We are NOT affiliated with Nintendo or YouTube. This app uses code from Wiinet.xyz. For more information, scroll down to Open Source Software.</p>
     <p style="color: blue">It's recommended to bookmark this page. Some sites may take longer to load.</p>
-    <p style="color: red;">\/ Scroll down \/</p>
     <a href="http://old.errexe.xyz/revivetube/t-and-p.html">Terms of Service and Privacy Policy (Last Updated: 7. Dec 2024 12:41 CET)</a><br><br>
     <a href="https://github.com/ReviveMii/revivetube/" target="_blank">Source Code</a><br><br>
     <a href="http://old.errexe.xyz/discord-redirect.html">Discord Server [Use a Compatible Device]</a>
