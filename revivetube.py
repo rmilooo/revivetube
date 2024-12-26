@@ -816,13 +816,14 @@ def channel_m():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             url = f"https://www.youtube.com/channel/{channel_id}/videos"
             info = ydl.extract_info(url, download=False)
-            
+
             if 'entries' not in info:
                 return "No videos found.", 404
             
             results = [
                 {
                     'id': video['id'],
+                    'duration': 'Duration not available on Channel View',
                     'title': video['title'],
                     'uploader': info.get('uploader', 'Unknown'),
                     'thumbnail': f"http://yt.old.errexe.xyz/thumbnail/{video['id']}"
