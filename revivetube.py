@@ -187,70 +187,76 @@ INDEX_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ReviveTube by ReviveMii</title>
-<style>
-    body {
-        font-family: 'Arial', sans-serif;
-        color: #fff;
-        background-color: #181818;
-        text-align: center; /* Zentriert den Text */
-    }
-    h1 {
-        color: #ff0000;
-        font-size: 28px;
-        margin-bottom: 20px;
-    }
-    p, h2 {
-        font-size: 16px;
-        margin-bottom: 10px;
-    }
-    .search-bar {
-        width: 300px;
-        padding: 10px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        display: block; /* Block-Level für zentrierten Abstand */
-        margin: 0 auto; /* Zentriert das Eingabefeld */
-    }
-    button {
-        padding: 10px 20px;
-        font-size: 16px;
-        background-color: #333333;
-        color: white;
-        border: none;
-        cursor: pointer;
-        border-radius: 4px;
-        display: block;
-        margin: 10px auto; /* Zentriert den Button */
-    }
-    .video-item {
-        margin-bottom: 20px;
-        text-align: center; /* Zentriert jedes Video-Item */
-    }
-    .video-item img {
-        width: 320px;
-        height: 180px;
-        border-radius: 8px;
-    }
-    .video-item-title {
-        color: #fff;
-        font-weight: bold;
-        font-size: 16px;
-        text-align: center;
-    }
-    .video-item-uploader {
-        color: #ccc;
-        font-size: 14px;
-        text-align: center;
-    }
-    .dark-mode {
-        background-color: #181818;
-        color: #fff;
-    }
-    .dark-mode a {
-        color: #1e90ff;
-    }
-</style>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+            background-color: #181818;
+            text-align: center; /* Zentriert den Text */
+        }
+        h1 {
+            color: #ff0000;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        p, h2 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .search-bar {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: block; /* Block-Level für zentrierten Abstand */
+            margin: 0 auto; /* Zentriert das Eingabefeld */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #333333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            display: block;
+            margin: 10px auto; /* Zentriert den Button */
+        }
+        .video-item {
+            margin-bottom: 20px;
+            text-align: center; /* Zentriert jedes Video-Item */
+        }
+        .video-item img {
+            width: 320px;
+            height: 180px;
+            border-radius: 8px;
+        }
+        .video-item-title {
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+        }
+        .video-item-uploader {
+            color: #ccc;
+            font-size: 14px;
+            text-align: center;
+        }
+        .video-item-duration {
+            color: #ccc;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 5px;
+        }
+        .dark-mode {
+            background-color: #181818;
+            color: #fff;
+        }
+        .dark-mode a {
+            color: #1e90ff;
+        }
+    </style>
 </head>
 <body class="dark-mode" id="page-body">
     <h1>ReviveTube by ReviveMii</h1>
@@ -268,6 +274,7 @@ INDEX_TEMPLATE = """
                         <img src="{{ video['thumbnail'] }}" alt="{{ video['title'] }}">
                         <div class="video-item-title">{{ video['title'] }}</div>
                         <div class="video-item-uploader">By: {{ video['uploader'] }}</div>
+                        <div class="video-item-duration">Duration: {{ video['duration'] }}</div>
                     </a>
                 </div>
             {% endfor %}
@@ -445,7 +452,7 @@ def get_video_comments(video_id, max_results=20):
     }
 
     try:
-        response = requests.get("https://www.googleapis.com/youtube/v3/commentThreads", params=params, timeout=1)
+        response = requests.get("https://www.googleapis.com/youtube/v3/commentThreads", params=params, timeout=3)
         response.raise_for_status()
 
         data = response.json()
@@ -506,30 +513,37 @@ def index():
     results = None
 
     if query:
-
-        response = requests.get(f"{API_BASE_URL}search?q={query}", timeout=3)
+        response = requests.get(f"https://y.com.sb/api/v1/search?q={query}", timeout=3)
         try:
-            data = response.json()  
+            data = response.json()
         except ValueError:
             return "Fehler beim Parsen der API-Antwort.", 500
 
         if response.status_code == 200 and isinstance(data, list):
             results = [
                 {
-                    "id": entry.get("videoId"),  
-                    "title": entry.get("title"),  
-                    "uploader": entry.get("author", "Unbekannt"),  
+                    "id": entry.get("videoId"),
+                    "title": entry.get("title"),
+                    "uploader": entry.get("author", "Unbekannt"),
                     "thumbnail": f"/thumbnail/{entry['videoId']}",
-                    "viewCount": entry.get("viewCountText", "Unbekannt"),  
-                    "published": entry.get("publishedText", "Unbekannt")  
+                    "viewCount": entry.get("viewCountText", "Unbekannt"),
+                    "published": entry.get("publishedText", "Unbekannt"),
+                    "duration": format_duration(entry.get("lengthSeconds", 0))  # Video Dauer formatiert
                 }
-                for entry in data  
-                if entry.get("videoId")  
+                for entry in data
+                if entry.get("videoId")
             ]
         else:
             return "Keine Ergebnisse gefunden oder Fehler in der API-Antwort.", 404
 
     return render_template_string(INDEX_TEMPLATE, results=results)
+
+def format_duration(seconds):
+    """Formatiert die Dauer von Sekunden in Minuten:Sekunden."""
+    minutes = seconds // 60
+    seconds = seconds % 60
+    return f"{minutes}:{str(seconds).zfill(2)}"
+
 def get_video_duration_from_file(video_path):
     """
     Holt die Dauer eines Videos aus der Datei (FLV oder MP4) mithilfe von ffprobe.
