@@ -557,14 +557,6 @@ def get_video_duration_from_file(video_path):
         return 0
 
 
-@app.route("/fullscreen", methods=["GET"])
-def fullscreen():
-    video_id = request.args.get("video_id")
-    if not video_id:
-        return "Missing Video-ID.", 400
-
-    return render_template_string(FULLSCREEN, video_id=video_id)
-
 @app.route("/watch", methods=["GET"])
 def watch():
     video_id = request.args.get("video_id")
