@@ -92,7 +92,7 @@ LOADING_TEMPLATE = """
     var goButton = document.getElementById('goButton');
     var loadingGif = document.getElementById('loadingGif');
     var progressText = document.getElementById('progressText');
-    var videoId = "{{ video_id }}"; // Pass video_id from Flask to the template
+    var videoId = "{{ video_id }}";
 
     function simulateLoading() {
         setInterval(checkStatus, 1000);
@@ -119,7 +119,7 @@ LOADING_TEMPLATE = """
         if (status.status === 'complete') {
             loadingGif.style.display = 'none';
             progressText.innerHTML = 'Done!';
-            goButton.style.display = 'inline'; // "inline-block" wird nicht überall unterstützt
+            goButton.style.display = 'inline';
         } else if (status.status === 'downloading') {
             progressText.innerHTML = 'The Server is Downloading...';
         } else if (status.status === 'converting') {
@@ -154,7 +154,7 @@ def get_api_key():
         with open("token.txt", "r") as f:
             return f.read().strip()  
     except FileNotFoundError:
-        raise FileNotFoundError("Die Datei token.txt wurde nicht gefunden. Bitte stelle sicher, dass sie vorhanden ist.")
+        raise FileNotFoundError("Missing token.txt. Please go to README.md")
 
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
 
@@ -192,7 +192,7 @@ INDEX_TEMPLATE = """
             font-family: 'Arial', sans-serif;
             color: #fff;
             background-color: #181818;
-            text-align: center; /* Zentriert den Text */
+            text-align: center;
         }
         h1 {
             color: #ff0000;
@@ -209,8 +209,8 @@ INDEX_TEMPLATE = """
             font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            display: block; /* Block-Level für zentrierten Abstand */
-            margin: 0 auto; /* Zentriert das Eingabefeld */
+            display: block;
+            margin: 0 auto;
         }
         button {
             padding: 10px 20px;
@@ -221,11 +221,11 @@ INDEX_TEMPLATE = """
             cursor: pointer;
             border-radius: 4px;
             display: block;
-            margin: 10px auto; /* Zentriert den Button */
+            margin: 10px auto;
         }
         .video-item {
             margin-bottom: 20px;
-            text-align: center; /* Zentriert jedes Video-Item */
+            text-align: center;
         }
         .video-item img {
             width: 320px;
@@ -377,7 +377,7 @@ WATCH_WII_TEMPLATE = """
     }
     h1 {
         color: red;
-        text-align: center; /* Zentriert den Titel */
+        text-align: center;
     }
     h3 {
         color: white;
@@ -438,9 +438,6 @@ def get_thumbnail(video_id):
         return f"Error fetching thumbnail: {str(e)}", 500
 
 def get_video_comments(video_id, max_results=20):
-    """
-    Ruft die letzten Kommentare für ein YouTube-Video ab.
-    """
     api_key = get_api_key()
 
     params = {
@@ -477,7 +474,7 @@ def get_video_comments(video_id, max_results=20):
 def switch_wii():
     video_id = request.args.get("video_id")
     if not video_id:
-        return "Fehlende Video-ID.", 400
+        return "Missing Video-ID.", 400
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Nintendo Wii; U; ; en) Opera/9.30 (Nintendo Wii)"
@@ -488,13 +485,13 @@ def switch_wii():
     if response.status_code == 200:
         return response.text
     else:
-        return "Fehler beim Abrufen des Videos im Wii-Modus.", 500
+        return "Can't start DEBUG Mode.", 500
 
 @app.route("/switch_n", methods=["GET"])
 def switch_n():
     video_id = request.args.get("video_id")
     if not video_id:
-        return "Fehlende Video-ID.", 400
+        return "Missing Video-ID.", 400
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -505,7 +502,7 @@ def switch_n():
     if response.status_code == 200:
         return response.text
     else:
-        return "Fehler beim Abrufen des Videos im normalen Modus.", 500
+        return "Can't start DEBUG Mode.", 500
 
 @app.route("/", methods=["GET"])
 def index():
@@ -517,7 +514,7 @@ def index():
         try:
             data = response.json()
         except ValueError:
-            return "Fehler beim Parsen der API-Antwort.", 500
+            return "Can't parse Data. If this Issue persist, report it in the Discord Server.", 500
 
         if response.status_code == 200 and isinstance(data, list):
             results = [
@@ -534,21 +531,16 @@ def index():
                 if entry.get("videoId")
             ]
         else:
-            return "Keine Ergebnisse gefunden oder Fehler in der API-Antwort.", 404
+            return "No Results or Error in the API.", 404
 
     return render_template_string(INDEX_TEMPLATE, results=results)
 
 def format_duration(seconds):
-    """Formatiert die Dauer von Sekunden in Minuten:Sekunden."""
     minutes = seconds // 60
     seconds = seconds % 60
     return f"{minutes}:{str(seconds).zfill(2)}"
 
 def get_video_duration_from_file(video_path):
-    """
-    Holt die Dauer eines Videos aus der Datei (FLV oder MP4) mithilfe von ffprobe.
-    Gibt die Dauer in Sekunden zurück.
-    """
     try:
         result = subprocess.run(
             ['ffprobe', '-v', 'error', '-show_format', '-show_streams', '-of', 'json', video_path],
@@ -561,7 +553,7 @@ def get_video_duration_from_file(video_path):
         
         return duration
     except Exception as e:
-        print(f"Fehler beim Abrufen der Video-Dauer: {str(e)}")
+        print(f"Can't fetch Video-Duration: {str(e)}")
         return 0
 
 
@@ -569,7 +561,7 @@ def get_video_duration_from_file(video_path):
 def fullscreen():
     video_id = request.args.get("video_id")
     if not video_id:
-        return "Fehlende Video-ID.", 400
+        return "Missing Video-ID.", 400
 
     return render_template_string(FULLSCREEN, video_id=video_id)
 
@@ -577,7 +569,7 @@ def fullscreen():
 def watch():
     video_id = request.args.get("video_id")
     if not video_id:
-        return "Fehlende Video-ID.", 400
+        return "Mising Video-ID.", 400
 
     video_mp4_path = os.path.join(VIDEO_FOLDER, f"{video_id}.mp4")
     video_flv_path = os.path.join(VIDEO_FOLDER, f"{video_id}.flv")
@@ -593,16 +585,16 @@ def watch():
         if response.status_code == 200:
             metadata = response.json()
         else:
-            return f"Fehler beim Abrufen der Metadaten für Video-ID {video_id}.", 500
+            return f"Metadata API Error for Video-ID {video_id}.", 500
     except requests.exceptions.RequestException as e:
-        return f"Fehler bei der Verbindung zur Metadaten-API: {str(e)}", 500
+        return f"Can't connect to Metadata-API: {str(e)}", 500
 
 
     comments = []
     try:
         comments = get_video_comments(video_id)
     except Exception as e:
-        print(f"Fehler beim Abrufen der Kommentare: {str(e)}")
+        print(f"Video-Comments Error: {str(e)}")
         comments = []
 
     if os.path.exists(video_mp4_path):
