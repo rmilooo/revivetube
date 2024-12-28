@@ -169,6 +169,7 @@ def get_folder_size(path):
             total_size += os.path.getsize(file_path)
     return total_size
 
+"""
 def delete_videos_periodically():
     while True:
         time.sleep(86400)  
@@ -179,6 +180,7 @@ def delete_videos_periodically():
                 print(f"Deleted: {file_path}")
 
 threading.Thread(target=delete_videos_periodically, daemon=True).start()
+"""
 
 INDEX_TEMPLATE = """
 <!DOCTYPE html>
