@@ -561,7 +561,7 @@ def get_video_duration_from_file(video_path):
 def watch():
     video_id = request.args.get("video_id")
     if not video_id:
-        return "Mising Video-ID.", 400
+        return "Missing Video-ID.", 400
 
     video_mp4_path = os.path.join(VIDEO_FOLDER, f"{video_id}.mp4")
     video_flv_path = os.path.join(VIDEO_FOLDER, f"{video_id}.flv")
