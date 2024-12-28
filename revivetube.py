@@ -384,6 +384,7 @@ WATCH_WII_TEMPLATE = """
         text-align: center;
     }
 </style>
+<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 </head>
 <body class="dark-mode" id="page-body">
  <div style="width: 100%; background-color: #000; text-align: center;">
@@ -613,7 +614,7 @@ def watch():
                                           video_flv=f"/sigma/videos/{video_id}.flv",
                                           alert_message="")
 
-        return render_template_string(WATCH_STANDARD_TEMPLATE, 
+        return render_template_string(WATCH_WII_TEMPLATE, 
                                       title=metadata['title'], 
                                       uploader=metadata['uploader'], 
                                       channelId=metadata['channelId'],
@@ -623,7 +624,7 @@ def watch():
                                       publishedAt=metadata['publishedAt'],
                                       comments=comments,
                                       video_id=video_id,
-                                      video_mp4=f"/sigma/videos/{video_id}.mp4",
+                                      video_flv=f"/sigma/videos/{video_id}.flv",
                                       alert_message="")
 
     if not os.path.exists(video_mp4_path):
