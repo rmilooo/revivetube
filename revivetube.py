@@ -5,7 +5,7 @@ ReviveMii Project and TheErrorExe is the Developer of this Code. Modification, N
 
 This Code uses the Invidious API, Google API and yt-dlp. This Code is designed to run on Ubuntu 24.04.
 
-Don’t claim that this code is your code. Don't use it without Credits to the ReviveMii Project. Don't use it without this Comment. Don't modify this Comment.
+Don't claim that this code is your code. Don't use it without Credits to the ReviveMii Project. Don't use it without this Comment. Don't modify this Comment.
 
 ReviveMii's Server Code is provided "as-is" and "as available." We do not guarantee uninterrupted access, error-free performance, or compatibility with all Wii systems. ReviveMii project is not liable for any damage, loss of data, or other issues arising from the use of this service and code.
 
@@ -283,19 +283,18 @@ INDEX_TEMPLATE = """
         </div>
     {% endif %}
     <p><a href="http://revivemii.errexe.xyz" target="_blank">Visit ReviveMii</a></p>
-    <p><a href="http://old.errexe.xyz" target="_blank">Visit ReviveMii (HTTP Only Version for the Wii)</a></p>
     <p style="color: red;">\/ Scroll down \/</p>
     <p style="font-size: 12px;">We are NOT affiliated with Nintendo or YouTube. This app uses code from Wiinet.xyz. For more information, scroll down to Open Source Software.</p>
     <p style="color: blue">It's recommended to bookmark this page. Some sites may take longer to load.</p>
-    <a href="http://old.errexe.xyz/revivetube/t-and-p.html">Terms of Service and Privacy Policy (Last Updated: 7. Dec 2024 12:41 CET)</a><br><br>
+    <a href="http://revivetube.errexe.xyz/revivetube/t-and-p.html">Terms of Service and Privacy Policy (Last Updated: 7. Dec 2024 12:41 CET)</a><br><br>
     <a href="https://github.com/ReviveMii/revivetube/" target="_blank">Source Code</a><br><br>
-    <a href="http://old.errexe.xyz/discord-redirect.html">Discord Server [Use a Compatible Device]</a>
+    <a href="http://revivetube.errexe.xyz/discord-redirect.html">Discord Server [Use a Compatible Device]</a>
     <p>Version: v2 Beta (Sometimes I forget to update the Version Number)</p>
     <a href="/licenses.html">Open Source Software Used in This App</a>
     <br>
     <a href="mailto:theerrorexe@gmail.com">Contact</a>
     <br>
-    <a href="/bf.html">Report Bugs & Feedback</a>
+    <a href="https://revivemii.errexe.xyz/feedback.html">Report Bugs & Feedback</a>
 </body>
 </html>
 """
@@ -646,7 +645,7 @@ def process_video(video_id):
             command = [
                 "yt-dlp",
                 "-f worstvideo+worstaudio",
-                "--force-ipv4",
+                "--proxy", "http://localhost:4000",
                 "-o", temp_video_path,
                 f"https://m.youtube.com/watch?v={video_id}"
             ]
@@ -654,7 +653,7 @@ def process_video(video_id):
 
             downloaded_files = [f for f in os.listdir(temp_dir) if video_id in f]
             if not downloaded_files:
-                video_status[video_id] = {"status": "error", "message": "Download fehlgeschlagen."}
+                video_status[video_id] = {"status": "error", "message": "Error downloading."}
                 return
 
             downloaded_file = os.path.join(temp_dir, downloaded_files[0])
