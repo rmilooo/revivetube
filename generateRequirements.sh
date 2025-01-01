@@ -1,0 +1,1 @@
+pipreqs . --force --ignore .venv

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Loading...</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #loadingGif {
+            width: 50px;
+            height: 50px;
+            margin: 20px auto;
+        }
+        #goButton {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+       #goButton:disabled {
+            background-color: gray;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+<h1>Loading</h1>
+<img alt="Loading..." id="loadingGif" src="loading.gif"/>
+<p id="progressText">Fetching Info...</p>
+<button id="goButton" onclick="startVideo()">Go</button>
+<br>
+<small style="color: grey">Loading Screen will NOT work in Dolphin Emulator.<br><br>Long Video = Longer Download and
+    Converting.<br><br>For videos longer than 7 minutes, there is a chance that they won’t play.</small>
+<script type="text/javascript">
+    var goButton = document.getElementById('goButton');
+    var loadingGif = document.getElementById('loadingGif');
+    var progressText = document.getElementById('progressText');
+    var videoId = "{{ video_id }}";
+
+    function simulateLoading() {
+        setInterval(checkStatus, 1000);
+    }
+
+    function checkStatus() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/status/' + videoId, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var response;
+                try {
+                    response = eval('(' + xhr.responseText + ')');
+                } catch (e) {
+                    response = { status: 'error' };
+                }
+                updateProgress(response);
+            }
+        };
+        xhr.send();
+    }
+
+    function updateProgress(status) {
+        if (status.status === 'complete') {
+            loadingGif.style.display = 'none';
+            progressText.innerHTML = 'Done!';
+            goButton.style.display = 'inline';
+        } else if (status.status === 'downloading') {
+            progressText.innerHTML = 'The Server is Downloading...';
+        } else if (status.status === 'converting') {
+            progressText.innerHTML = 'The Server is Converting video...';
+        } else if (status.status === 'converting for Wii') {
+            progressText.innerHTML = 'The Server is Converting for Wii...';
+        } else {
+            progressText.innerHTML = 'The Server was unable to process the video! Report the Bug in the Discord Server. <br> Error Details for Developers: {{ video_id }}_unable_1.<br>Discord Server on ReviveMii Homepage Footer';
+        }
+    }
+
+    function startVideo() {
+        window.location.href = '/watch?video_id=' + videoId;
+    }
+
+    window.onload = function () {
+        simulateLoading();
+    };
+</script>
+</body>
+</html>

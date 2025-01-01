@@ -1,6 +1,7 @@
 import os
-import time
 import subprocess
+import time
+
 
 def get_folder_size(folder_path):
     total_size = 0
@@ -10,6 +11,7 @@ def get_folder_size(folder_path):
             if os.path.exists(filepath):
                 total_size += os.path.getsize(filepath)
     return total_size
+
 
 def delete_files(folder_path, extensions):
     os.system('sudo pkill -f revivetube.py')
@@ -23,6 +25,7 @@ def delete_files(folder_path, extensions):
                 except:
                     print("ERROR")
 
+
 def monitor_folder(folder_path, size_limit_gb, check_interval):
     size_limit_bytes = size_limit_gb * 1024 * 1024 * 1024
     while True:
@@ -30,6 +33,7 @@ def monitor_folder(folder_path, size_limit_gb, check_interval):
         if folder_size > size_limit_bytes:
             delete_files(folder_path, [".flv", ".mp4"])
         time.sleep(check_interval)
+
 
 if __name__ == "__main__":
     folder_to_monitor = "./sigma/videos/"
