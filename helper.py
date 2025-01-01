@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 
 
@@ -35,3 +36,21 @@ def format_duration(seconds):
     minutes = seconds // 60
     seconds = seconds % 60
     return f"{minutes}:{str(seconds).zfill(2)}"
+
+
+def get_file_size(file_path):
+    return os.path.getsize(file_path)
+
+
+def get_range(file_path, byte_range):
+    with open(file_path, 'rb') as f:
+        f.seek(byte_range[0])
+        return f.read(byte_range[1] - byte_range[0] + 1)
+
+
+def get_api_key():
+    try:
+        with open("token.txt", "r") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        raise FileNotFoundError("Missing token.txt. Please go to README.md")

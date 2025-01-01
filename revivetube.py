@@ -26,7 +26,7 @@ import requests
 import yt_dlp
 from flask import Flask, request, render_template_string, send_file, Response, abort, jsonify
 
-from helper import read_file, get_video_duration_from_file, format_duration
+import helper
 
 app = Flask(__name__)
 
@@ -53,25 +53,7 @@ video_status = {}
 
 FILE_SEPARATOR = os.sep
 
-LOADING_TEMPLATE = read_file(f"site_storage{FILE_SEPARATOR}loading_template.html")
-
-
-def get_file_size(file_path):
-    return os.path.getsize(file_path)
-
-
-def get_range(file_path, byte_range):
-    with open(file_path, 'rb') as f:
-        f.seek(byte_range[0])
-        return f.read(byte_range[1] - byte_range[0] + 1)
-
-
-def get_api_key():
-    try:
-        with open("token.txt", "r") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        raise FileNotFoundError("Missing token.txt. Please go to README.md")
+LOADING_TEMPLATE = helper.read_file(f"site_storage{FILE_SEPARATOR}loading_template.html")
 
 
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
@@ -104,11 +86,11 @@ def delete_videos_periodically():
 threading.Thread(target=delete_videos_periodically, daemon=True).start()
 """
 
-INDEX_TEMPLATE = read_file(f"site_storage{FILE_SEPARATOR}index_template.html")
+INDEX_TEMPLATE = helper.read_file(f"site_storage{FILE_SEPARATOR}index_template.html")
 
-WATCH_STANDARD_TEMPLATE = read_file(f"site_storage{FILE_SEPARATOR}watch_standard_template.html")
+WATCH_STANDARD_TEMPLATE = helper.read_file(f"site_storage{FILE_SEPARATOR}watch_standard_template.html")
 
-WATCH_WII_TEMPLATE = read_file(f"site_storage{FILE_SEPARATOR}watch_wii_template.html")
+WATCH_WII_TEMPLATE = helper.read_file(f"site_storage{FILE_SEPARATOR}watch_wii_template.html")
 
 
 @app.route("/thumbnail/<video_id>")
@@ -132,7 +114,7 @@ def get_thumbnail(video_id):
 
 
 def get_video_comments(video_id, max_results=20):
-    api_key = get_api_key()
+    api_key = helper.get_api_key()
 
     params = {
         "part": "snippet",
@@ -223,7 +205,7 @@ def index():
                     "thumbnail": f"/thumbnail/{entry['videoId']}",
                     "viewCount": entry.get("viewCountText", "Unbekannt"),
                     "published": entry.get("publishedText", "Unbekannt"),
-                    "duration": format_duration(entry.get("lengthSeconds", 0))  # Video Dauer formatiert
+                    "duration": helper.format_duration(entry.get("lengthSeconds", 0))  # Video Dauer formatiert
                 }
                 for entry in data
                 if entry.get("videoId")
@@ -266,7 +248,7 @@ def watch():
         comments = []
 
     if os.path.exists(video_mp4_path):
-        video_duration = get_video_duration_from_file(video_flv_path)
+        video_duration = helper.get_video_duration_from_file(video_flv_path)
         alert_script = ""
         if video_duration > 420:
             alert_script = """
@@ -320,7 +302,7 @@ def process_video(video_id):
             command = [
                 "yt-dlp",
                 "-f worstvideo+worstaudio",
-                "--proxy", "http://localhost:4000",
+                "http://localhost:4000",
                 "-o", temp_video_path,
                 f"https://m.youtube.com/watch?v={video_id}"
             ]
@@ -386,7 +368,7 @@ def check_status(video_id):
 
 @app.route("/video_metadata/<video_id>")
 def video_metadata(video_id):
-    api_key = get_api_key()
+    api_key = helper.get_api_key()
 
     params = {
         "part": "snippet,statistics",
@@ -435,7 +417,7 @@ def serve_video(filename):
     if not os.path.exists(file_path):
         return "File not found.", 404
 
-    file_size = get_file_size(file_path)
+    file_size = helper.get_file_size(file_path)
 
     range_header = request.headers.get('Range', None)
     if range_header:
@@ -447,7 +429,7 @@ def serve_video(filename):
         if start_byte >= file_size or end_byte >= file_size:
             abort(416)
 
-        data = get_range(file_path, (start_byte, end_byte))
+        data = helper.get_range(file_path, (start_byte, end_byte))
         content_range = f"bytes {start_byte}-{end_byte}/{file_size}"
 
         response = Response(
