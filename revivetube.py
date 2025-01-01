@@ -15,27 +15,31 @@ ReviveMii Project: https://revivemii.fr.to/
 """
 
 import json
-import isodate
-from flask import Flask, request, render_template_string, send_file, Response, abort, jsonify
-import tempfile
-import shutil
-import yt_dlp
-import requests
-import subprocess
 import os
+import shutil
+import subprocess
+import tempfile
 import threading
-from threading import Thread
 import time
+from threading import Thread
+
+import requests
+import yt_dlp
+from flask import Flask, request, render_template_string, send_file, Response, abort, jsonify
+
+from helper import read_file
 
 app = Flask(__name__)
+
 
 def check_and_create_folder():
     while True:
         folder_path = './sigma/videos'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-            print(f"Ordner {folder_path} wurde erstellt.")
+            print(f"Folder {folder_path} got created.")
         time.sleep(10)
+
 
 def start_folder_check():
     thread = Thread(target=check_and_create_folder)
@@ -48,118 +52,34 @@ API_BASE_URL = "https://y.com.sb/api/v1/"
 YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/videos"
 video_status = {}
 
-LOADING_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading...</title>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        #loadingGif {
-            width: 50px;
-            height: 50px;
-            margin: 20px auto;
-        }
-        #goButton {
-            display: none;
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-       #goButton:disabled {
-            background-color: gray;
-            cursor: not-allowed;
-        }
-    </style>
-</head>
-<body>
-    <h1>Loading</h1>
-    <img id="loadingGif" src="loading.gif" alt="Loading..." />
-    <p id="progressText">Fetching Info...</p>
-    <button id="goButton" onclick="startVideo()">Go</button>
-    <br>
-    <small style="color: grey">Loading Screen will NOT work in Dolphin Emulator.<br><br>Long Video = Longer Download and Converting.<br><br>For videos longer than 7 minutes, there is a chance that they won’t play.</small>
-    <script type="text/javascript">
-    var goButton = document.getElementById('goButton');
-    var loadingGif = document.getElementById('loadingGif');
-    var progressText = document.getElementById('progressText');
-    var videoId = "{{ video_id }}";
+FILE_SEPARATOR = os.sep
 
-    function simulateLoading() {
-        setInterval(checkStatus, 1000);
-    }
+LOADING_TEMPLATE = read_file(f"site_storage{FILE_SEPARATOR}loading_template.html")
 
-    function checkStatus() {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/status/' + videoId, true);
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var response;
-                try {
-                    response = eval('(' + xhr.responseText + ')');
-                } catch (e) {
-                    response = { status: 'error' };
-                }
-                updateProgress(response);
-            }
-        };
-        xhr.send();
-    }
 
-    function updateProgress(status) {
-        if (status.status === 'complete') {
-            loadingGif.style.display = 'none';
-            progressText.innerHTML = 'Done!';
-            goButton.style.display = 'inline';
-        } else if (status.status === 'downloading') {
-            progressText.innerHTML = 'The Server is Downloading...';
-        } else if (status.status === 'converting') {
-            progressText.innerHTML = 'The Server is Converting video...';
-        } else if (status.status === 'converting for Wii') {
-            progressText.innerHTML = 'The Server is Converting for Wii...';
-        } else {
-            progressText.innerHTML = 'The Server was unable to process the video! Report the Bug in the Discord Server. <br> Error Details for Developers: {{ video_id }}_unable_1.<br>Discord Server on ReviveMii Homepage Footer';
-        }
-    }
-
-    function startVideo() {
-        window.location.href = '/watch?video_id=' + videoId;
-    }
-
-    window.onload = function () {
-        simulateLoading();
-    };
-</script>
-</body>
-</html>"""
 def get_file_size(file_path):
     return os.path.getsize(file_path)
+
 
 def get_range(file_path, byte_range):
     with open(file_path, 'rb') as f:
         f.seek(byte_range[0])
         return f.read(byte_range[1] - byte_range[0] + 1)
 
+
 def get_api_key():
     try:
         with open("token.txt", "r") as f:
-            return f.read().strip()  
+            return f.read().strip()
     except FileNotFoundError:
         raise FileNotFoundError("Missing token.txt. Please go to README.md")
 
+
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
 
-MAX_VIDEO_SIZE = 1 * 1024 * 1024 * 1024  
-MAX_FOLDER_SIZE = 5 * 1024 * 1024 * 1024  
+MAX_VIDEO_SIZE = 1 * 1024 * 1024 * 1024
+MAX_FOLDER_SIZE = 5 * 1024 * 1024 * 1024
+
 
 def get_folder_size(path):
     total_size = 0
@@ -169,7 +89,10 @@ def get_folder_size(path):
             total_size += os.path.getsize(file_path)
     return total_size
 
+
 """
+[UNUSED IN THE CURRENT VERSION]
+
 def delete_videos_periodically():
     while True:
         time.sleep(86400)  
@@ -182,244 +105,13 @@ def delete_videos_periodically():
 threading.Thread(target=delete_videos_periodically, daemon=True).start()
 """
 
-INDEX_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReviveTube by ReviveMii</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            color: #fff;
-            background-color: #181818;
-            text-align: center;
-        }
-        h1 {
-            color: #ff0000;
-            font-size: 28px;
-            margin-bottom: 20px;
-        }
-        p, h2 {
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        .search-bar {
-            width: 300px;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            display: block;
-            margin: 0 auto;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #333333;
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            display: block;
-            margin: 10px auto;
-        }
-        .video-item {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .video-item img {
-            width: 320px;
-            height: 180px;
-            border-radius: 8px;
-        }
-        .video-item-title {
-            color: #fff;
-            font-weight: bold;
-            font-size: 16px;
-            text-align: center;
-        }
-        .video-item-uploader {
-            color: #ccc;
-            font-size: 14px;
-            text-align: center;
-        }
-        .video-item-duration {
-            color: #ccc;
-            font-size: 14px;
-            text-align: center;
-            margin-top: 5px;
-        }
-        .dark-mode {
-            background-color: #181818;
-            color: #fff;
-        }
-        .dark-mode a {
-            color: #1e90ff;
-        }
-    </style>
-</head>
-<body class="dark-mode" id="page-body">
-    <h1>ReviveTube by ReviveMii</h1>
-    <p>A YouTube App for the Wii</p>
-    <form action="/" method="get">
-        <input class="search-bar" type="text" name="query" placeholder="Search YouTube">
-        <button type="submit">Go</button>
-    </form>
-    {% if results %}
-        <h2>Search Results</h2>
-        <div>
-            {% for video in results %}
-                <div class="video-item">
-                    <a href="/watch?video_id={{ video['id'] }}">
-                        <img src="{{ video['thumbnail'] }}" alt="{{ video['title'] }}">
-                        <div class="video-item-title">{{ video['title'] }}</div>
-                        <div class="video-item-uploader">By: {{ video['uploader'] }}</div>
-                        <div class="video-item-duration">Duration: {{ video['duration'] }}</div>
-                    </a>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    <p><a href="http://revivemii.errexe.xyz" target="_blank">Visit ReviveMii</a></p>
-    <p style="color: red;">\/ Scroll down \/</p>
-    <p style="font-size: 12px;">We are NOT affiliated with Nintendo or YouTube. This app uses code from Wiinet.xyz. For more information, scroll down to Open Source Software.</p>
-    <p style="color: blue">It's recommended to bookmark this page. Some sites may take longer to load.</p>
-    <a href="http://revivetube.errexe.xyz/revivetube/t-and-p.html">Terms of Service and Privacy Policy (Last Updated: 7. Dec 2024 12:41 CET)</a><br><br>
-    <a href="https://github.com/ReviveMii/revivetube/" target="_blank">Source Code</a><br><br>
-    <a href="http://revivetube.errexe.xyz/discord-redirect.html">Discord Server [Use a Compatible Device]</a>
-    <p>Version: v2 Beta (Sometimes I forget to update the Version Number)</p>
-    <a href="/licenses.html">Open Source Software Used in This App</a>
-    <br>
-    <a href="mailto:theerrorexe@gmail.com">Contact</a>
-    <br>
-    <a href="https://revivemii.errexe.xyz/feedback.html">Report Bugs & Feedback</a>
-</body>
-</html>
-"""
+INDEX_TEMPLATE = read_file(f"site_storage{FILE_SEPARATOR}index_template.html")
 
-WATCH_STANDARD_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <style>
-        body { font-family: 'Arial', sans-serif; text-align: center; color: #fff; background-color: #181818; }
-        video { margin-top: 20px; }
-        h1 { color: #ff0000; font-size: 24px; }
-        h3, p { font-size: 16px; }
-        .comments { text-align: left; margin: 0 auto; width: 80%; font-size: 14px; }
-        .comment { margin-bottom: 15px; padding: 10px; border-bottom: 1px solid #ddd; }
-        .comment p { font-size: 14px; }
-        .dark-mode { background-color: #181818; color: #fff; }
-        .dark-mode a { color: #1e90ff; }
-    </style>
-</head>
-<!-- <body class="dark-mode" id="page-body">
-   <video width="640" height="360" controls>
- <source src="{{ video_mp4 }}" type="video/mp4">
- Your browser does not support the video tag.
-    </video>
-    <h1>{{ title }}</h1>
-    <h3>Uploaded by: <a href="/channel?channel_id={{ channelId }}">{{ uploader }}</a></h3>
-    <p><strong>Views:</strong> {{ viewCount }}</p>
-    <p><strong>Likes:</strong> {{ likeCount }}</p>
-    <p><strong>Upload Date:</strong> {{ publishedAt }}</p>
-    <a href="#comments">Skip Description</a>
-    
-    <h3>Description:</h3>
-    <p>{{ description | safe }}</p>
-    <h3 id="comments" class="comments">Comments:</h3>
-    <div class="comments">
-        {% if comments %}
-            {% for comment in comments %}
-                <div class="comment">
-                    <p><strong>{{ comment.author }}</strong> posted:</p>
-                    <p>{{ comment.text|safe }}</p>
-                    <p style="color: gray; font-size: 12px;">Likes: {{ comment.likeCount }} | Post date: {{ comment.publishedAt }}</p>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>No Comments.</p>
-        {% endif %}
-    </div> -->
-Please access this Site on a Wii
-</body>
-</html>
-"""
+WATCH_STANDARD_TEMPLATE = read_file(f"site_storage{FILE_SEPARATOR}watch_standard_template.html")
 
-WATCH_WII_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-<style>
-    body {
-        font-family: 'Arial', sans-serif;
-        text-align: center; /* Zentriert den Text */
-        color: #fff;
-        background-color: #181818;
-    }
-    .dark-mode {
-        background-color: #181818;
-        color: #fff;
-    }
-    .dark-mode a {
-        color: #1e90ff;
-    }
-    .comments {
-        margin: 0 auto;
-        width: 80%;
-    }
-    h1 {
-        color: red;
-        text-align: center;
-    }
-    h3 {
-        color: white;
-        text-align: center;
-    }
-</style>
-<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
-</head>
-<body class="dark-mode" id="page-body">
- <div style="width: 100%; background-color: #000; text-align: center;">
-        <object type="application/x-shockwave-flash" data="/player.swf" width="384" height="256">
-            <param name="wmode" value="transparent">
-            <param name="allowFullScreen" value="false">
-            <param name="flashvars" value="filename={{ video_flv }}">
-        </object>
-    </div>
-    <h1 style="color: red">{{ title }}</h1>
-    <h3>Uploaded by: <a href="/channel?channel_id={{ channelId }}">{{ uploader }}</a></h3>
-    <p><strong>Views:</strong> {{ viewCount }}</p>
-    <p><strong>Likes:</strong> {{ likeCount }}</p>
-    <p><strong>Upload Date:</strong> {{ publishedAt }}</p>
-    <a href="#comments">Skip Description</a>
-    <h3 style="color: red">Description:</h3>
-    <p>{{ description | safe }}</p>
-    <h3 id="comments" class="comments" style="color: red">Comments:</h3>
-    <div class="comments">
-        {% if comments %}
-            {% for comment in comments %}
-                <div class="comment">
-                    <p><strong>{{ comment.author }}</strong> posted:</p>
-                    <p>{{ comment.text|safe }}</p>
-                    <p style="color: gray; font-size: 12px;">Likes: {{ comment.likeCount }} | Post date: {{ comment.publishedAt }}</p>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>No Comments.</p>
-        {% endif %}
-    </div>
-</body>
-</html>
-"""
+WATCH_WII_TEMPLATE = read_file(f"site_storage{FILE_SEPARATOR}watch_wii_template.html")
+
+
 @app.route("/thumbnail/<video_id>")
 def get_thumbnail(video_id):
     thumbnail_url = f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
@@ -439,6 +131,7 @@ def get_thumbnail(video_id):
     except requests.exceptions.RequestException as e:
         return f"Error fetching thumbnail: {str(e)}", 500
 
+
 def get_video_comments(video_id, max_results=20):
     api_key = get_api_key()
 
@@ -447,7 +140,7 @@ def get_video_comments(video_id, max_results=20):
         "videoId": video_id,
         "key": api_key,
         "maxResults": max_results,
-        "order": "relevance"  
+        "order": "relevance"
     }
 
     try:
@@ -472,6 +165,8 @@ def get_video_comments(video_id, max_results=20):
     except requests.exceptions.RequestException as e:
         print(f"Fehler beim Abrufen der Kommentare: {str(e)}")
         return []
+
+
 @app.route("/switch_wii", methods=["GET"])
 def switch_wii():
     video_id = request.args.get("video_id")
@@ -489,6 +184,7 @@ def switch_wii():
     else:
         return "Can't start DEBUG Mode.", 500
 
+
 @app.route("/switch_n", methods=["GET"])
 def switch_n():
     video_id = request.args.get("video_id")
@@ -505,6 +201,7 @@ def switch_n():
         return response.text
     else:
         return "Can't start DEBUG Mode.", 500
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -537,10 +234,12 @@ def index():
 
     return render_template_string(INDEX_TEMPLATE, results=results)
 
+
 def format_duration(seconds):
     minutes = seconds // 60
     seconds = seconds % 60
     return f"{minutes}:{str(seconds).zfill(2)}"
+
 
 def get_video_duration_from_file(video_path):
     try:
@@ -548,11 +247,11 @@ def get_video_duration_from_file(video_path):
             ['ffprobe', '-v', 'error', '-show_format', '-show_streams', '-of', 'json', video_path],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        
+
         video_info = json.loads(result.stdout)
-        
+
         duration = float(video_info['format']['duration'])
-        
+
         return duration
     except Exception as e:
         print(f"Can't fetch Video-Duration: {str(e)}")
@@ -583,7 +282,6 @@ def watch():
     except requests.exceptions.RequestException as e:
         return f"Can't connect to Metadata-API: {str(e)}", 500
 
-
     comments = []
     try:
         comments = get_video_comments(video_id)
@@ -600,28 +298,28 @@ def watch():
                 alert("This Video is long. There is a chance that the Wii will not play the Video. Try a Video under 7 minutes or something like that.");
             </script>
             """
-        
+
         if is_wii and os.path.exists(video_flv_path):
-            return render_template_string(WATCH_WII_TEMPLATE + alert_script, 
-                                          title=metadata['title'], 
-                                          uploader=metadata['uploader'], 
+            return render_template_string(WATCH_WII_TEMPLATE + alert_script,
+                                          title=metadata['title'],
+                                          uploader=metadata['uploader'],
                                           channelId=metadata['channelId'],
                                           description=metadata['description'].replace("\n", "<br>"),
-                                          viewCount=metadata['viewCount'], 
+                                          viewCount=metadata['viewCount'],
                                           likeCount=metadata['likeCount'],
                                           publishedAt=metadata['publishedAt'],
                                           comments=comments,
-                                          video_id=video_id, 
+                                          video_id=video_id,
                                           video_flv=f"/sigma/videos/{video_id}.flv",
                                           alert_message="")
 
-        return render_template_string(WATCH_WII_TEMPLATE, 
-                                      title=metadata['title'], 
-                                      uploader=metadata['uploader'], 
+        return render_template_string(WATCH_WII_TEMPLATE,
+                                      title=metadata['title'],
+                                      uploader=metadata['uploader'],
                                       channelId=metadata['channelId'],
                                       description=metadata['description'].replace("\n", "<br>"),
-                                      viewCount=metadata['viewCount'], 
-                                      likeCount=metadata['likeCount'], 
+                                      viewCount=metadata['viewCount'],
+                                      likeCount=metadata['likeCount'],
                                       publishedAt=metadata['publishedAt'],
                                       comments=comments,
                                       video_id=video_id,
@@ -632,6 +330,7 @@ def watch():
         if video_status[video_id]["status"] == "processing":
             threading.Thread(target=process_video, args=(video_id,)).start()
         return render_template_string(LOADING_TEMPLATE, video_id=video_id)
+
 
 def process_video(video_id):
     video_mp4_path = os.path.join(VIDEO_FOLDER, f"{video_id}.mp4")
@@ -703,9 +402,11 @@ def process_video(video_id):
     except Exception as e:
         video_status[video_id] = {"status": "error", "message": str(e)}
 
+
 @app.route("/status/<video_id>")
 def check_status(video_id):
     return jsonify(video_status.get(video_id, {"status": "pending"}))
+
 
 @app.route("/video_metadata/<video_id>")
 def video_metadata(video_id):
@@ -719,7 +420,7 @@ def video_metadata(video_id):
 
     try:
         response = requests.get(YOUTUBE_API_URL, params=params, timeout=1)
-        response.raise_for_status()  
+        response.raise_for_status()
 
         data = response.json()
 
@@ -750,6 +451,7 @@ def video_metadata(video_id):
     except requests.exceptions.RequestException as e:
         return f"Fehler bei der API-Anfrage: {str(e)}", 500
 
+
 @app.route("/<path:filename>")
 def serve_video(filename):
     file_path = os.path.join(filename)
@@ -767,7 +469,7 @@ def serve_video(filename):
         end_byte = int(end_byte) if end_byte else file_size - 1
 
         if start_byte >= file_size or end_byte >= file_size:
-            abort(416)  
+            abort(416)
 
         data = get_range(file_path, (start_byte, end_byte))
         content_range = f"bytes {start_byte}-{end_byte}/{file_size}"
@@ -785,10 +487,11 @@ def serve_video(filename):
 
     return send_file(file_path)
 
+
 @app.route('/channel', methods=['GET'])
 def channel_m():
     channel_id = request.args.get('channel_id', None)
-    
+
     if not channel_id:
         return "Channel ID is required.", 400
 
@@ -797,7 +500,7 @@ def channel_m():
         'extract_flat': True,
         'playlistend': 20,
     }
-    
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             url = f"https://www.youtube.com/channel/{channel_id}/videos"
@@ -805,7 +508,7 @@ def channel_m():
 
             if 'entries' not in info:
                 return "No videos found.", 404
-            
+
             results = [
                 {
                     'id': video['id'],
@@ -816,11 +519,12 @@ def channel_m():
                 }
                 for video in info['entries']
             ]
-            
+
             return render_template_string(INDEX_TEMPLATE, results=results)
-    
+
     except Exception as e:
         return f"An error occurred: {str(e)}", 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, port=5000)
