@@ -26,7 +26,7 @@ import requests
 import yt_dlp
 from flask import Flask, request, render_template_string, send_file, Response, abort, jsonify
 
-from helper import read_file, get_video_duration_from_file
+from helper import read_file, get_video_duration_from_file, format_duration
 
 app = Flask(__name__)
 
@@ -232,12 +232,6 @@ def index():
             return "No Results or Error in the API.", 404
 
     return render_template_string(INDEX_TEMPLATE, results=results)
-
-
-def format_duration(seconds):
-    minutes = seconds // 60
-    seconds = seconds % 60
-    return f"{minutes}:{str(seconds).zfill(2)}"
 
 
 @app.route("/watch", methods=["GET"])
