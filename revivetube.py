@@ -14,7 +14,6 @@ If you use this Code, you agree to https://revivemii.fr.to/revivetube/t-and-p.ht
 ReviveMii Project: https://revivemii.fr.to/
 """
 
-import json
 import os
 import shutil
 import subprocess
@@ -27,7 +26,7 @@ import requests
 import yt_dlp
 from flask import Flask, request, render_template_string, send_file, Response, abort, jsonify
 
-from helper import read_file
+from helper import read_file, get_video_duration_from_file
 
 app = Flask(__name__)
 
@@ -239,23 +238,6 @@ def format_duration(seconds):
     minutes = seconds // 60
     seconds = seconds % 60
     return f"{minutes}:{str(seconds).zfill(2)}"
-
-
-def get_video_duration_from_file(video_path):
-    try:
-        result = subprocess.run(
-            ['ffprobe', '-v', 'error', '-show_format', '-show_streams', '-of', 'json', video_path],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-
-        video_info = json.loads(result.stdout)
-
-        duration = float(video_info['format']['duration'])
-
-        return duration
-    except Exception as e:
-        print(f"Can't fetch Video-Duration: {str(e)}")
-        return 0
 
 
 @app.route("/watch", methods=["GET"])
