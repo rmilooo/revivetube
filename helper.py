@@ -32,6 +32,7 @@ def get_video_duration_from_file(video_path):
         print(f"Can't fetch Video-Duration: {str(e)}")
         return 0
 
+
 def format_duration(seconds):
     minutes = seconds // 60
     seconds = seconds % 60

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Loading...</title>
     <style>
         body {
@@ -31,13 +31,14 @@
     </style>
 </head>
 <body>
-    <h1>Loading</h1>
-    <img id="loadingGif" src="loading.gif" alt="Loading..." />
-    <p id="progressText">Fetching Info...</p>
-    <button id="goButton" onclick="startVideo()">Go</button>
-    <br>
-    <small style="color: grey">Loading Screen will NOT work in Dolphin Emulator.<br><br>Long Video = Longer Download and Converting.<br><br>For videos longer than 7 minutes, there is a chance that they won’t play.</small>
-    <script type="text/javascript">
+<h1>Loading</h1>
+<img alt="Loading..." id="loadingGif" src="loading.gif"/>
+<p id="progressText">Fetching Info...</p>
+<button id="goButton" onclick="startVideo()">Go</button>
+<br>
+<small style="color: grey">Loading Screen will NOT work in Dolphin Emulator.<br><br>Long Video = Longer Download and
+    Converting.<br><br>For videos longer than 7 minutes, there is a chance that they won’t play.</small>
+<script type="text/javascript">
     var goButton = document.getElementById('goButton');
     var loadingGif = document.getElementById('loadingGif');
     var progressText = document.getElementById('progressText');
